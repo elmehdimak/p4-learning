@@ -1,11 +1,6 @@
 # L3 Forwarding
 
-In this example we show how to create a virtual topology without using any helper ([mininet](), [p4utils](), ...). For 
-that we will manually create hosts using unix namespaces and interconnect them using virtual interfaces and bmv2
-switches.
-
-The goal of this example is to show what does mininet do when you define a topology. Note that mininet provides you with
-much richer set of options and does many more things. Here, we just show the minimum needed to try a very basic p4 example.
+The objective of this example is to write a P4 program that implements basic forwarding. To keep things simple, we will just implement forwarding for IPv4.
 
 
 **Topology:**
