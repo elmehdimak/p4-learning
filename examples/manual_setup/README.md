@@ -1,4 +1,4 @@
-# Manual Topology Setup
+# L3 Forwarding
 
 In this example we show how to create a virtual topology without using any helper ([mininet](), [p4utils](), ...). For 
 that we will manually create hosts using unix namespaces and interconnect them using virtual interfaces and bmv2
@@ -22,11 +22,6 @@ We first create a pair of linux network namespaces
  (see more: [article](https://blogs.igalia.com/dpino/2016/04/10/network-namespaces/), 
  [man page](https://www.systutorials.com/docs/linux/man/8-ip-netns/)).
   
- Linux namespaces provide a network stack for all the processes running within the namespace. Including network
- interfaces, routing tables, iptables rules, etc. Thus, network virtualization tools (like mininet) use linux network namespaces to
- instanciate isolated nodes in a topology (hosts, switches, routers, etc)
- 
- To create network namespaces we can use the `ip` tool, specifically `ip-netns` command.
  
 ```bash
 $ sudo ip netns add h1
@@ -50,8 +45,6 @@ $ sudo ip netns exec <namespace-name> bash
 To interconnect namespaces between them we need to create virtual ethernet interfaces and assign them. Virtual interfaces
 come in connected pairs, thus if you send a packet to one side of the pair you get the packet in the other side. 
 
-AS before, we use `ip` to create three `veth` pairs:
-
 ```bash
 $ sudo ip link add h1-eth0 type veth peer name s1-eth0
 $ sudo ip link add h2-eth0 type veth peer name s2-eth0
@@ -66,28 +59,11 @@ sudo ip link set h1-eth0 netns h1
 sudo ip link set h2-eth0 netns h2
 ```
 
-We leave the rest of interfaces (the ones we will connect to the switches) in the `global` namespace due to the fact that
-`bmv2` switches can not be run inside network namespaces (or at least they do not seem to work). However, that is fine since 
-the switches do not need to run the `TCP/IP` stack they just need to receive packets from one interface, process them, and send 
-them to another interface.
+We leave the rest of interfaces (the ones we will connect to the switches) in the `global` namespace as they just need to receive packets from one interface, process them, and send them to another interface.
 
-**Optional**:
-
-Optionally we can change the interfaces MTU to `9500` so we can play with bigger packets. Furthermore, we can disable `ipv6`, to avoid
-seeing some automatically generated packets by the `ipv6` stack.
-
-```bash
-declare -a arr=("h1-eth0" "h2-eth0" "s1-eth0" "s1-eth1" "s2-eth0" "s2-eth1")
-for intf in "${arr[@]}"
-do
-    ip link set "$intf" mtu 9500
-    sysctl net.ipv6.conf.${intf}.disable_ipv6=1
-done
-```
-
-In the next steps we need to bring the interfaces up, assign IP, configure gateways and fill arp tables.
 
 #### Setup Interfaces
+We need to bring the interfaces up, assign IP, configure gateways and fill arp tables.
 
 First we bring the loopback interfaces at the namespaces:
 
